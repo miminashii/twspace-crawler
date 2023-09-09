@@ -23,7 +23,7 @@
     "url": "https://github.com/HitomaruKonpaku/twspace-crawler.git"
   },
   "scripts": {
-    "start": "node dist/index --config ./config.json --env .env --force-open --debug",
+    "start": "node dist/index --config ./config.json --env .env --force-open",
     "start:config": "node dist/index --config ./config.json",
     "build": "tsc",
     "prepare": "npm run build",
