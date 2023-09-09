@@ -23,7 +23,7 @@
     "url": "https://github.com/HitomaruKonpaku/twspace-crawler.git"
   },
   "scripts": {
-    "start": "node dist/index",
+    "start": "node dist/index --config ./config.json --env .env --force-open --debug",
     "start:config": "node dist/index --config ./config.json",
     "build": "tsc",
     "prepare": "npm run build",
@@ -41,6 +41,7 @@
     "node-notifier": "^10.0.0",
     "open": "^8.4.0",
     "tslib": "^2.3.1",
+    "twitter-api-v2": "^1.15.1",
     "winston": "^3.4.0",
     "winston-daily-rotate-file": "^4.5.5"
   },

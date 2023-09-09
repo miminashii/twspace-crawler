@@ -3,6 +3,7 @@ import axios from 'axios'
 import { randomUUID } from 'crypto'
 import winston from 'winston'
 
+import { TwitterApi } from 'twitter-api-v2'
 import { discordWebhookLimiter } from '../Limiter'
 import { AudioSpace } from '../api/interface/twitter-graphql.interface'
 import { SpaceState } from '../enums/Twitter.enum'
@@ -12,6 +13,7 @@ import { SpaceUtil } from '../utils/SpaceUtil'
 import { TwitterUtil } from '../utils/TwitterUtil'
 import { TwitterSpaceUtil } from '../utils/twitter-space.util'
 import { configManager } from './ConfigManager'
+import { TwitterUser } from '../model/twitter-user'
 
 export class Webhook {
   private logger: winston.Logger
@@ -28,8 +30,9 @@ export class Webhook {
     return configManager.config?.webhooks
   }
 
-  public send() {
+  public async send() {
     this.sendDiscord()
+    await this.postTwitter()
   }
 
   private async post(url: string, body: any) {
@@ -172,5 +175,72 @@ export class Webhook {
     }
 
     return embed
+  }
+
+  private async postTwitter() {
+    this.logger.debug('postTwitter')
+    // Instantiate with desired auth type (here's Bearer v2 auth)
+    const twitterClient = new TwitterApi({
+      appKey: process.env.TWITTER_API_KEY,
+      appSecret: process.env.TWITTER_API_SECRET,
+      accessToken: process.env.TWITTER_ACCESS_TOKEN,
+      accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
+    })
+
+    try {
+      const title = this.space.title ? `「${Webhook.shortenStr(this.space.title)}」` : ''
+      const spaceUrl = `https://twitter.com/i/spaces/${this.space.id}`
+      const isAvailableForReplay = this.space.isAvailableForReplay ? 'あり' : 'なし'
+      let content = ''
+      if (this.space.state === SpaceState.LIVE) {
+        content = `${this.space.creator.username} がスペース${title}を開始しました (開始日時: ${Webhook.unixTimestampToJst(this.space.startedAt)})\n\n録音: ${isAvailableForReplay}\n${spaceUrl}`
+        content = content.trim()
+        this.logger.debug(content)
+        await twitterClient.v2.tweet(content)
+      }
+      if (this.space.state === SpaceState.ENDED) {
+        content = `${this.space.creator.username} がスペース${title}を終了しました (終了日時: ${Webhook.unixTimestampToJst(this.space.endedAt)})\n\n録音: ${isAvailableForReplay}\nSpeakers: ${Webhook.parseSpeakers(this.space.speakers)}\n${spaceUrl}`
+        content = content.trim()
+        this.logger.debug(content)
+        const resp = await twitterClient.v2.tweet(content)
+        await twitterClient.v2.tweet(`playlistUrl: ${this.space.playlistUrl}`, {
+          reply: {
+            in_reply_to_tweet_id: resp.data.id,
+          },
+        })
+      }
+    } catch (error) {
+      this.logger.error(`postTwitter: ${error.message}`)
+    }
+  }
+
+  static shortenStr(str: string, limit = 30) {
+    return str.length > limit ? `${str.slice(0, limit)}...` : str
+  }
+
+  static unixTimestampToJst(unixTimestamp: number) {
+    const jst = new Date(unixTimestamp + ((new Date().getTimezoneOffset() + (9 * 60)) * 60 * 1000))
+    return (
+      `${jst.getFullYear()
+      }-${
+        (`0${jst.getMonth() + 1}`).slice(-2)
+      }-${
+        (`0${jst.getDate()}`).slice(-2)
+      } ${
+        (`0${jst.getHours()}`).slice(-2)
+      }:${
+        (`0${jst.getMinutes()}`).slice(-2)
+      }:${
+        (`0${jst.getSeconds()}`).slice(-2)
+      }`
+    )
+  }
+
+  static parseSpeakers(speakers: TwitterUser[]) {
+    const speakersJoined: string[] = []
+    speakers.forEach((speaker) => {
+      speakersJoined.push(speaker.username)
+    })
+    return speakersJoined.length === 0 ? speakersJoined.join(', ') : 'なし (Host のみ)'
   }
 }

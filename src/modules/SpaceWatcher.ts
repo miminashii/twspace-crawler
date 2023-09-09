@@ -204,7 +204,7 @@ export class SpaceWatcher extends EventEmitter {
       this.logSpaceInfo()
 
       if (this.space?.state === SpaceState.LIVE) {
-        this.sendWebhooks()
+        await this.sendWebhooks()
       }
     }
 
@@ -308,7 +308,7 @@ export class SpaceWatcher extends EventEmitter {
       }
 
       if (this.space?.state === SpaceState.ENDED && prevState === SpaceState.LIVE) {
-        this.sendWebhooks()
+        await this.sendWebhooks()
       }
     } catch (error) {
       this.logger.warn(`processDownload: ${error.message}`)
@@ -392,9 +392,9 @@ export class SpaceWatcher extends EventEmitter {
 
   // #region webhook
 
-  private sendWebhooks() {
+  private async sendWebhooks() {
     const webhook = new Webhook(this.space, this.audioSpace)
-    webhook.send()
+    await webhook.send()
   }
 
   // #endregion
