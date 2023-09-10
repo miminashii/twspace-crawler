@@ -198,7 +198,7 @@ export class Webhook {
         await twitterClient.v2.tweet(content)
       }
       if (this.space.state === SpaceState.ENDED) {
-        content = `スペース${title}が終了しました (終了日時: ${Webhook.unixTimestampToJst(this.space.endedAt)})\n\n録音: ${isAvailableForReplay}\nSpeakers: ${Webhook.parseSpeakers(this.space.speakers)}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
+        content = `スペース${title}が終了しました (終了日時: ${Webhook.unixTimestampToJst(this.space.endedAt)})\n\n録音: ${isAvailableForReplay}\nHosts: ${Webhook.getAllUsernames(this.space.hosts)}\nSpeakers: ${Webhook.getAllUsernames(this.space.speakers)}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
         content = content.trim()
         this.logger.debug(content)
         const resp = await twitterClient.v2.tweet(content)
@@ -235,11 +235,11 @@ export class Webhook {
     )
   }
 
-  static parseSpeakers(speakers: TwitterUser[]) {
-    const speakersJoined: string[] = []
-    speakers.forEach((speaker) => {
-      speakersJoined.push(speaker.username)
+  static getAllUsernames(users: TwitterUser[]) {
+    const userArr: string[] = []
+    users.forEach((speaker) => {
+      userArr.push(speaker.username)
     })
-    return speakersJoined.length === 0 ? speakersJoined.join(', ') : 'なし (Host のみ)'
+    return userArr.length === 0 ? userArr.join(', ') : ''
   }
 }
