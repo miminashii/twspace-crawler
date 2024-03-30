@@ -192,13 +192,13 @@ export class Webhook {
       const isAvailableForReplay = this.space.isAvailableForReplay ? 'あり' : 'なし'
       let content = ''
       if (this.space.state === SpaceState.LIVE) {
-        content = `スペース${title}が開始しました。\n\n開始日時: ${Webhook.unixTimestampToJst(this.space.startedAt)})\n録音: ${isAvailableForReplay}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
+        content = `スペース${title}が開始しました。\n\n開始日時: ${Webhook.unixTimestampToJst(this.space.startedAt)}\n録音: ${isAvailableForReplay}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
         content = content.trim()
         this.logger.debug(content)
         await twitterClient.v2.tweet(content)
       }
       if (this.space.state === SpaceState.ENDED) {
-        content = `スペース${title}が終了しました。\n\n終了日時: ${Webhook.unixTimestampToJst(this.space.endedAt)})\n録音: ${isAvailableForReplay}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
+        content = `スペース${title}が終了しました。\n\n終了日時: ${Webhook.unixTimestampToJst(this.space.endedAt)}\n録音: ${isAvailableForReplay}\n${TwitterUtil.getSpaceUrl(this.space.id)}`
         content = content.trim()
         this.logger.debug(content)
         const resp = await twitterClient.v2.tweet(content)
